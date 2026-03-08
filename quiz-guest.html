@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Creativity Analysis Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#050a14;--surface:#0d1525;--card:#111e35;--border:#1e3050;
+  --glow:#00d4ff;--glow2:#ff6b00;--gold:#ffd700;--text:#e0eeff;
+  --muted:#5a7a9a;--success:#00ff88;--danger:#ff3355;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 50%,rgba(0,80,160,.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,180,255,.08) 0%,transparent 50%);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(0,212,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;}
+.screen{display:none;position:relative;z-index:1;}
+.screen.active{display:flex;}
+
+/* HOME */
+#home{min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:2rem;}
+.home-inner{text-align:center;max-width:520px;width:100%;}
+.quiz-badge{display:inline-block;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);
+  border-radius:30px;padding:.4rem 1.2rem;font-size:.75rem;letter-spacing:3px;color:var(--glow);
+  text-transform:uppercase;margin-bottom:1.5rem;animation:pulse-border 2s infinite;}
+@keyframes pulse-border{0%,100%{border-color:rgba(0,212,255,.3)}50%{border-color:rgba(0,212,255,.8)}}
+.quiz-title{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(1.8rem,6vw,3rem);line-height:1.1;
+  background:linear-gradient(135deg,#00d4ff 0%,#fff 50%,#ff6b00 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem;letter-spacing:2px;}
+.quiz-sub{color:var(--muted);font-size:.9rem;margin-bottom:2.5rem;letter-spacing:1px;}
+.entry-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;position:relative;overflow:hidden;}
+.entry-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--glow),transparent);}
+.entry-card label{display:block;font-size:.8rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:.6rem;}
+.entry-card input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);
+  padding:1rem 1.2rem;border-radius:12px;font-size:1rem;font-family:'Exo 2',sans-serif;outline:none;transition:.3s;margin-bottom:1.5rem;}
+.entry-card input:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(0,212,255,.1);}
+.stats-row{display:flex;gap:1rem;margin-bottom:1.5rem;}
+.stat-chip{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.7rem;text-align:center;}
+.stat-chip .num{font-family:'Orbitron',monospace;font-size:1.3rem;color:var(--glow);font-weight:700;}
+.stat-chip .lbl{font-size:.7rem;color:var(--muted);letter-spacing:1px;margin-top:.2rem;}
+.btn-start{width:100%;background:linear-gradient(135deg,#0060c0,#00a0ff);color:#fff;border:none;padding:1.1rem;
+  border-radius:12px;font-size:1rem;font-weight:700;font-family:'Orbitron',monospace;cursor:pointer;
+  letter-spacing:2px;transition:.3s;position:relative;overflow:hidden;text-transform:uppercase;}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,160,255,.4);}
+.btn-start:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.err{color:var(--danger);font-size:.85rem;margin-top:.6rem;text-align:center;}
+
+/* WAITING */
+#waiting{min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;}
+.wait-box{max-width:420px;}
+.wait-icon{width:80px;height:80px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--glow);
+  animation:spin 1.2s linear infinite;margin:0 auto 1.5rem;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wait-title{font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--glow);letter-spacing:2px;margin-bottom:.5rem;}
+.wait-name{font-size:1.1rem;margin-bottom:.3rem;}
+.wait-name span{color:var(--gold);font-weight:700;}
+.wait-sub{color:var(--muted);font-size:.9rem;}
+
+/* QUIZ */
+#quiz{min-height:100vh;flex-direction:column;align-items:center;padding:1.5rem;padding-bottom:3rem;}
+.quiz-header{width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.quiz-header .title{font-family:'Orbitron',monospace;font-size:.85rem;color:var(--glow);letter-spacing:2px;}
+.team-badge{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.85rem;color:var(--gold);font-weight:600;}
+.timer-wrap{display:flex;align-items:center;gap:.6rem;}
+.timer-ring{position:relative;width:52px;height:52px;}
+.timer-ring svg{transform:rotate(-90deg);}
+.timer-ring circle{fill:none;stroke:var(--border);stroke-width:4;}
+.timer-ring .progress{stroke:var(--glow);stroke-width:4;stroke-linecap:round;stroke-dasharray:138.23;stroke-dashoffset:0;transition:stroke-dashoffset .9s linear,stroke .3s;}
+.timer-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;color:var(--glow);}
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:700px;position:relative;overflow:hidden;}
+.q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--glow),var(--glow2));}
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+.q-counter{font-size:.8rem;color:var(--muted);letter-spacing:1px;}
+.q-points{font-size:.8rem;color:var(--gold);background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.2);border-radius:20px;padding:.2rem .7rem;}
+.progress-dots{display:flex;gap:3px;margin-bottom:1.2rem;flex-wrap:wrap;}
+.pdot{width:18px;height:5px;border-radius:3px;background:var(--border);transition:.3s;}
+.pdot.done{background:var(--success);}
+.pdot.current{background:var(--glow);}
+.pdot.wrong{background:var(--danger);}
+.q-text{font-size:1.15rem;font-weight:500;line-height:1.6;margin-bottom:1.5rem;color:var(--text);}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+@media(max-width:500px){.options{grid-template-columns:1fr;}}
+.opt{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:1rem;cursor:pointer;
+  font-family:'Exo 2',sans-serif;font-size:.95rem;color:var(--text);text-align:left;transition:.25s;display:flex;align-items:flex-start;gap:.8rem;}
+.opt:hover:not(:disabled){border-color:var(--glow);background:rgba(0,212,255,.05);transform:translateY(-2px);}
+.opt:disabled{cursor:not-allowed;}
+.opt.correct{border-color:var(--success)!important;background:rgba(0,255,136,.1)!important;}
+.opt.wrong{border-color:var(--danger)!important;background:rgba(255,51,85,.1)!important;}
+.opt.selected-pending{border-color:var(--glow)!important;background:rgba(0,212,255,.08)!important;}
+.opt.highlight{border-color:var(--success)!important;background:rgba(0,255,136,.07)!important;}
+.opt-key{min-width:28px;height:28px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0;transition:.25s;}
+.opt.correct .opt-key{background:var(--success);color:#000;}
+.opt.wrong .opt-key{background:var(--danger);color:#fff;}
+.opt.highlight .opt-key{background:var(--success);color:#000;}
+.status-msg{margin-top:1rem;padding:1rem;border-radius:12px;text-align:center;font-weight:600;font-size:.95rem;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.status-msg.correct{background:rgba(0,255,136,.12);color:var(--success);border:1px solid rgba(0,255,136,.2);}
+.status-msg.wrong{background:rgba(255,51,85,.12);color:var(--danger);border:1px solid rgba(255,51,85,.2);}
+.status-msg.timeout{background:rgba(255,107,0,.12);color:var(--glow2);border:1px solid rgba(255,107,0,.2);}
+.status-msg.waiting{background:rgba(0,212,255,.08);color:var(--glow);border:1px solid rgba(0,212,255,.2);}
+.score-live{margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.8rem 1.2rem;display:flex;justify-content:space-between;align-items:center;}
+.score-live .lbl{font-size:.8rem;color:var(--muted);}
+.score-live .val{font-family:'Orbitron',monospace;font-size:1.1rem;color:var(--gold);font-weight:700;}
+.streak-indicator{font-size:.8rem;color:var(--glow2);}
+
+/* FINISHED */
+#finished{min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;}
+.finish-box{max-width:460px;width:100%;}
+.finish-icon{font-size:5rem;margin-bottom:1.2rem;animation:bounce .7s ease;}
+@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}}
+.finish-title{font-family:'Orbitron',monospace;font-size:2.2rem;color:var(--gold);letter-spacing:3px;margin-bottom:1rem;}
+.finish-sub{font-size:1.3rem;color:var(--glow);font-weight:600;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);border-radius:14px;padding:.9rem 1.8rem;display:inline-block;letter-spacing:1px;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="home">
+  <div class="home-inner">
+    
+    <h1 class="quiz-title">CREATIVITY<br>ANALYSIS</h1>
+    <p class="quiz-sub">Quiz • 25 Questions</p>
+    <div class="entry-card">
+      <div class="stats-row">
+        <div class="stat-chip"><div class="num">25</div><div class="lbl">Questions</div></div>
+        <div class="stat-chip"><div class="num">45s</div><div class="lbl">Per Question</div></div>
+        <div class="stat-chip"><div class="num">2pts</div><div class="lbl">Per Correct</div></div>
+      </div>
+      <label for="team-input">Enter Your Team Name</label>
+      <input id="team-input" placeholder="e.g. Team Alpha" maxlength="25" autocomplete="off"
+        onkeydown="if(event.key==='Enter')joinQuiz()"/>
+      <button class="btn-start" id="join-btn" onclick="joinQuiz()">JOIN QUIZ →</button>
+      <p class="err" id="join-error"></p>
+    </div>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div class="screen" id="waiting">
+  <div class="wait-box">
+    <div class="wait-icon"></div>
+    <div class="wait-title">YOU'RE IN!</div>
+    <div class="wait-name">Team: <span id="w-teamname"></span></div>
+    <div class="wait-sub">Waiting for the host to start the quiz…</div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="quiz">
+  <div class="quiz-header">
+    <div class="title">CREATIVITY ANALYSIS</div>
+    <div class="team-badge" id="q-teamname">Team</div>
+  </div>
+  <div class="q-card">
+    <div class="q-meta">
+      <span class="q-counter" id="q-counter">Q 1 / 25</span>
+      <div class="timer-wrap">
+        <div class="timer-ring">
+          <svg width="52" height="52" viewBox="0 0 52 52">
+            <circle cx="26" cy="26" r="22"/>
+            <circle class="progress" id="timer-arc" cx="26" cy="26" r="22"/>
+          </svg>
+          <div class="timer-num" id="timer-num">30</div>
+        </div>
+        <span class="q-points">+2 pts</span>
+      </div>
+    </div>
+    <div class="progress-dots" id="progress-dots"></div>
+    <div class="q-text" id="q-text">Loading…</div>
+    <div class="options" id="options"></div>
+    <div id="status-msg"></div>
+    <div class="score-live">
+      <div><div class="lbl">Your Score</div><div class="val" id="score-display">0</div></div>
+      <div style="text-align:right"><div class="lbl">Streak</div><div class="streak-indicator" id="streak-display">🔥 0</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- FINISHED -->
+<div class="screen" id="finished">
+  <div class="finish-box">
+    <div class="finish-icon">🎉</div>
+    <div class="finish-title">QUIZ COMPLETED!</div>
+    <div class="finish-sub" id="fin-teamname"></div>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAc8jly9WtUamtaPJpVK5MPV8poiIcQPGY",
+  authDomain:"connexion-e62a4.firebaseapp.com",
+  databaseURL:"https://connexion-e62a4-default-rtdb.firebaseio.com",
+  projectId:"connexion-e62a4"
+});
+const db = firebase.database();
+
+const QUESTIONS = [
+  {q:"According to Ohm's Law, what happens to current if voltage remains constant and resistance doubles?",opts:["Current doubles","Current halves","Current becomes zero","Current remains same"],ans:1},
+  {q:"The force between two charges becomes how many times if the distance between them is reduced to half according to Coulomb's Law?",opts:["2 times","4 times","8 times","16 times"],ans:1},
+  {q:"The SI unit of EMF is:",opts:["Ampere","Volt","Coulomb","Watt"],ans:1},
+  {q:"Which instrument is used to detect very small current in a circuit?",opts:["Ammeter","Voltmeter","Galvanometer","Wattmeter"],ans:2},
+  {q:"The electric field inside a conductor in electrostatic equilibrium is:",opts:["Maximum","Minimum","Zero","Infinite"],ans:2},
+  {q:"The unit of capacitance is:",opts:["Henry","Weber","Farad","Tesla"],ans:2},
+  {q:"Which law states that the algebraic sum of currents at a node is zero?",opts:["Ohm's Law","Kirchhoff Voltage Law","Kirchhoff Current Law","Faraday's Law"],ans:2},
+  {q:"The relation between current, charge, and time is:",opts:["I = Q/t","I = Qt","I = Q²/t","I = t/Q"],ans:0},
+  {q:"The resistance of a wire depends on:",opts:["Length","Cross-sectional area","Material","All of these"],ans:3},
+  {q:"The formula for energy stored in a capacitor is:",opts:["CV","½CV²","V²/C","C/V²"],ans:1},
+  {q:"Which electrical quantity is measured in Tesla?",opts:["Magnetic field","Electric charge","Resistance","Voltage"],ans:0},
+  {q:"If two identical cells of EMF 2V each are connected in series, the total EMF is:",opts:["1 V","2 V","4 V","0 V"],ans:2},
+  {q:"The reciprocal of resistance is called:",opts:["Reactance","Conductance","Impedance","Admittance"],ans:1},
+  {q:"If voltage across a resistor is 20 V and current is 4 A, what is the resistance?",opts:["2 Ω","5 Ω","10 Ω","80 Ω"],ans:1},
+  {q:"Which law states that the sum of voltage drops in a closed loop equals the supplied EMF?",opts:["Kirchhoff Current Law","Kirchhoff Voltage Law","Ohm's Law","Lenz's Law"],ans:1},
+  {q:"If the charge stored in a capacitor doubles, the stored energy becomes:",opts:["Double","Four times","Half","Same"],ans:1},
+  {q:"Drift velocity of electrons increases when:",opts:["Electric field increases","Temperature increases","Resistance increases","Length increases"],ans:0},
+  {q:"In a parallel circuit, the voltage across each resistor is:",opts:["Different","Same","Zero","Infinite"],ans:1},
+  {q:"The condition for maximum power transfer in a circuit is:",opts:["Load resistance > internal resistance","Load resistance < internal resistance","Load resistance = internal resistance","Load resistance = 0"],ans:2},
+  {q:"The SI unit of magnetic flux is:",opts:["Weber","Tesla","Henry","Volt"],ans:0},
+  {q:"Which component opposes the change in current in a circuit?",opts:["Capacitor","Resistor","Inductor","Diode"],ans:2},
+  {q:"If resistance of a conductor doubles and voltage remains constant, power will:",opts:["Double","Become half","Remain same","Become four times"],ans:1},
+  {q:"Which theorem is used to analyze circuits with multiple sources?",opts:["Superposition theorem","Ohm's Law","Maximum power theorem","Norton theorem"],ans:0},
+  {q:"The EMF of a cell is defined as:",opts:["Potential difference in resistor","Work done per unit charge","Energy per unit current","Power per unit charge"],ans:1},
+  {q:"If three 6 Ω resistors are connected in parallel, the equivalent resistance is:",opts:["6 Ω","3 Ω","2 Ω","18 Ω"],ans:2},
+];
+
+const TIME_PER_Q=45, POINTS_CORRECT=2, STREAK_BONUS_AT=5;
+const CIRC=2*Math.PI*22;
+
+let teamName='', playerId='';
+let currentQ=-1, score=0, streak=0, bestStreak=0;
+let correct=0, wrong=0, bonusTotal=0;
+let answered=false, selectedAnswer=-1;
+let timerInterval=null, timeLeft=TIME_PER_Q, qStartTime=0;
+
+function joinQuiz(){
+  teamName=document.getElementById('team-input').value.trim();
+  if(!teamName){document.getElementById('team-input').focus();return;}
+  document.getElementById('join-btn').disabled=true;
+  document.getElementById('join-error').textContent='';
+
+  playerId='p_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+  const pRef=db.ref('quiz/players/'+playerId);
+  pRef.set({name:teamName,score:0,streak:0,correct:0,wrong:0,bonusTotal:0,bestStreak:0,finished:false});
+  pRef.onDisconnect().remove();
+
+  document.getElementById('w-teamname').textContent=teamName;
+  showScreen('waiting');
+
+  // Listen for quiz to start
+  db.ref('quiz/status').on('value',snap=>{
+    const st=snap.val();
+    if(st==='active'){
+      db.ref('quiz/currentQuestion').once('value',qs=>{
+        const idx=qs.val();
+        if(idx!==null&&idx>=0&&document.querySelector('.screen.active').id!=='quiz'){
+          document.getElementById('q-teamname').textContent=teamName;
+          buildDots();
+          showScreen('quiz');
+          startQ(idx);
+        }
+      });
+    } else if(st==='ended'){
+      finishQuiz();
+    }
+  });
+
+  // Listen for question number changes from host
+  db.ref('quiz/currentQuestion').on('value',snap=>{
+    const idx=snap.val();
+    if(idx===null||idx<0)return;
+    if(document.querySelector('.screen.active').id==='quiz'&&idx!==currentQ){
+      startQ(idx);
+    }
+  });
+}
+
+function buildDots(){
+  const w=document.getElementById('progress-dots');
+  w.innerHTML='';
+  QUESTIONS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='pdot';d.id='pdot-'+i;w.appendChild(d);
+  });
+}
+
+function startQ(idx){
+  currentQ=idx; answered=false; selectedAnswer=-1;
+  timeLeft=TIME_PER_Q; qStartTime=Date.now();
+  const q=QUESTIONS[idx];
+  document.getElementById('q-counter').textContent='Q '+(idx+1)+' / '+QUESTIONS.length;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('status-msg').innerHTML='';
+  document.getElementById('score-display').textContent=score;
+  document.getElementById('streak-display').textContent='🔥 '+streak;
+  dot(idx,'current');
+
+  const opts=document.getElementById('options');
+  opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt';b.id='opt-'+i;
+    b.onclick=()=>submitAns(i);
+    b.innerHTML='<span class="opt-key">'+['A','B','C','D'][i]+'</span>'+esc(o);
+    opts.appendChild(b);
+  });
+
+  clearInterval(timerInterval);
+  arcUpdate(TIME_PER_Q);
+  timerInterval=setInterval(()=>{
+    timeLeft--;arcUpdate(timeLeft);
+    if(timeLeft<=0){clearInterval(timerInterval);timeUp();}
+  },1000);
+}
+
+function submitAns(idx){
+  if(answered)return;
+  answered=true; selectedAnswer=idx;
+  const timeUsed=((Date.now()-qStartTime)/1000).toFixed(2);
+  document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
+  document.getElementById('opt-'+idx).classList.add('selected-pending');
+  showSt('waiting','⏳ Answer locked in! Waiting for timer…');
+  db.ref('quiz/answers/'+currentQ+'/'+playerId).set({
+    name:teamName, answer:idx, timeUsed:parseFloat(timeUsed), timestamp:Date.now()
+  });
+}
+
+function timeUp(){
+  const q=QUESTIONS[currentQ];
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;b.classList.remove('selected-pending');});
+  document.getElementById('opt-'+q.ans).classList.add('highlight');
+
+  let pts=0;
+  const isOk=answered&&selectedAnswer===q.ans;
+
+  if(!answered){
+    streak=0;wrong++;
+    showSt('timeout','⏰ Time\'s up! Correct: '+['A','B','C','D'][q.ans]);
+    dot(currentQ,'wrong');
+  } else if(isOk){
+    pts=POINTS_CORRECT;streak++;correct++;
+    if(streak>bestStreak)bestStreak=streak;
+    if(streak%STREAK_BONUS_AT===0){pts++;bonusTotal++;}
+    score+=pts;
+    document.getElementById('opt-'+selectedAnswer).classList.remove('selected-pending');
+    document.getElementById('opt-'+selectedAnswer).classList.add('correct');
+    showSt('correct','✅ Correct! +'+pts+' pts'+(pts>POINTS_CORRECT?' 🔥 Streak bonus!':''));
+    dot(currentQ,'done');
+  } else {
+    streak=0;wrong++;
+    document.getElementById('opt-'+selectedAnswer).classList.remove('selected-pending');
+    document.getElementById('opt-'+selectedAnswer).classList.add('wrong');
+    showSt('wrong','❌ Wrong! Correct: '+['A','B','C','D'][q.ans]);
+    dot(currentQ,'wrong');
+  }
+
+  document.getElementById('score-display').textContent=score;
+  document.getElementById('streak-display').textContent='🔥 '+streak;
+  db.ref('quiz/players/'+playerId).update({score,streak,correct,wrong,bonusTotal,bestStreak});
+}
+
+function finishQuiz(){
+  clearInterval(timerInterval);
+  db.ref('quiz/players/'+playerId).update({finished:true,finishedAt:Date.now()});
+  document.getElementById('fin-teamname').textContent=teamName;
+  showScreen('finished');
+}
+
+function arcUpdate(t){
+  const arc=document.getElementById('timer-arc'),num=document.getElementById('timer-num');
+  arc.style.strokeDashoffset=CIRC*(1-t/TIME_PER_Q);
+  num.textContent=t;
+  if(t<=5){arc.style.stroke='#ff3355';num.style.color='#ff3355';}
+  else if(t<=10){arc.style.stroke='#ff6b00';num.style.color='#ff6b00';}
+  else{arc.style.stroke='#00d4ff';num.style.color='#00d4ff';}
+}
+function dot(i,s){const d=document.getElementById('pdot-'+i);if(d)d.className='pdot '+s;}
+function showSt(t,m){document.getElementById('status-msg').innerHTML='<div class="status-msg '+t+'">'+m+'</div>';}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
