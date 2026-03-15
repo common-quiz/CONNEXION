@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Host Dashboard — Creativity Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#050a14;--surface:#0d1525;--card:#111e35;--border:#1e3050;
+  --glow:#00d4ff;--glow2:#ff6b00;--gold:#ffd700;--text:#e0eeff;
+  --muted:#5a7a9a;--success:#00ff88;--danger:#ff3355;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;
+  background-image:radial-gradient(ellipse at 10% 50%,rgba(0,80,160,.12) 0%,transparent 60%),radial-gradient(ellipse at 90% 10%,rgba(0,180,255,.07) 0%,transparent 50%);}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(5,10,20,.95);border-bottom:1px solid var(--border);
+  padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(10px);}
+.topbar-title{font-family:'Orbitron',monospace;font-size:1rem;color:var(--glow);letter-spacing:2px;}
+.topbar-right{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--success);animation:pulse 1.5s infinite;display:inline-block;margin-right:4px;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{padding:.55rem 1.1rem;border-radius:9px;font-size:.8rem;font-weight:700;cursor:pointer;border:none;font-family:'Exo 2',sans-serif;letter-spacing:.5px;transition:.2s;}
+.btn:hover{transform:translateY(-1px);}
+.btn-end{background:rgba(255,51,85,.15);border:1px solid var(--danger);color:var(--danger);}
+.btn-reset{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-reset:hover{border-color:var(--danger);color:var(--danger);}
+
+/* LAYOUT */
+.main{padding:1.2rem 1.5rem;position:relative;z-index:1;}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.5rem;position:relative;overflow:hidden;}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--glow),transparent);}
+.panel-title{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem;}
+.panel-title .cnt{background:var(--card);border-radius:20px;padding:.1rem .5rem;font-size:.68rem;color:var(--glow);}
+
+/* STATS */
+.stats-top{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.2rem;}
+@media(max-width:600px){.stats-top{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;}
+.stat-card .n{font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--glow);}
+.stat-card .l{font-size:.7rem;color:var(--muted);margin-top:.2rem;letter-spacing:1px;text-transform:uppercase;}
+
+/* QUESTION */
+.q-display{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-bottom:1rem;}
+.q-meta-row{display:flex;justify-content:space-between;margin-bottom:.7rem;font-size:.78rem;color:var(--muted);}
+.q-body{font-size:1.05rem;font-weight:500;line-height:1.6;margin-bottom:1rem;}
+.opts-preview{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.opt-preview{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.55rem .8rem;font-size:.82rem;display:flex;gap:.5rem;align-items:flex-start;}
+.opt-preview.ca{border-color:var(--success);background:rgba(0,255,136,.08);color:var(--success);}
+.opt-key{font-weight:700;min-width:16px;}
+
+/* TIMER */
+.timer-big{display:flex;align-items:center;gap:1.2rem;margin-bottom:1rem;}
+.timer-ring-big{position:relative;width:72px;height:72px;}
+.timer-ring-big svg{transform:rotate(-90deg);}
+.timer-ring-big circle{fill:none;stroke:var(--border);stroke-width:5;}
+.timer-ring-big .prog{stroke:var(--glow);stroke-width:5;stroke-linecap:round;stroke-dasharray:207.35;stroke-dashoffset:0;transition:stroke-dashoffset .9s linear,stroke .3s;}
+.timer-big-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--glow);}
+.timer-info .lbl{font-size:.72rem;color:var(--muted);letter-spacing:1px;}
+.timer-info .val{font-family:'Orbitron',monospace;font-size:1rem;color:var(--text);margin-top:.2rem;}
+
+.controls{display:flex;gap:.7rem;flex-wrap:wrap;}
+.btn-ctrl{padding:.65rem 1.2rem;border-radius:9px;font-size:.82rem;font-weight:700;cursor:pointer;border:none;font-family:'Exo 2',sans-serif;transition:.2s;}
+.btn-ctrl:hover{transform:translateY(-1px);}
+.btn-start-q{background:linear-gradient(135deg,#00a040,#00d060);color:#000;}
+.btn-next-q{background:linear-gradient(135deg,#806000,#ffd700);color:#000;}
+.btn-skip-q{background:transparent;border:1px solid var(--border);color:var(--muted);}
+
+/* PROGRESS */
+.q-progress{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:1rem;}
+.qdot{width:16px;height:5px;border-radius:3px;background:var(--border);transition:.3s;}
+.qdot.done{background:var(--success);}
+.qdot.current{background:var(--glow);}
+
+/* LEADERBOARD */
+.lb-list{display:flex;flex-direction:column;gap:.45rem;max-height:500px;overflow-y:auto;}
+.lb-row{background:var(--card);border-radius:11px;padding:.75rem 1rem;display:flex;align-items:center;gap:.7rem;font-size:.88rem;transition:.3s;}
+.rank-badge{width:24px;height:24px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0;}
+.rank-badge.r1{background:var(--gold);color:#000;}
+.rank-badge.r2{background:#c0c0d0;color:#000;}
+.rank-badge.r3{background:#cd7f32;color:#fff;}
+.lb-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-stat{font-size:.75rem;color:var(--muted);}
+.lb-streak{font-size:.75rem;color:var(--glow2);margin-left:.3rem;}
+.lb-score{font-family:'Orbitron',monospace;font-size:.92rem;color:var(--gold);font-weight:700;}
+
+/* FINAL */
+.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:1rem;margin:1.5rem 0;}
+.p-slot{text-align:center;}
+.p-bar{border-radius:10px 10px 0 0;width:85px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:.6rem;}
+.p-bar.p1{height:110px;background:linear-gradient(180deg,var(--gold),#c09000);}
+.p-bar.p2{height:80px;background:linear-gradient(180deg,#c0c0d0,#707080);}
+.p-bar.p3{height:60px;background:linear-gradient(180deg,#cd9060,#8d5020);}
+.p-name{font-weight:600;font-size:.8rem;margin-top:.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:85px;}
+.p-pts{font-size:.73rem;color:var(--muted);}
+
+/* SETUP */
+#setup-screen{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:2rem;
+  background-image:radial-gradient(ellipse at 30% 50%,#1a1040 0%,var(--bg) 60%);}
+.setup-box{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:2.5rem;max-width:460px;width:100%;text-align:center;box-shadow:0 40px 80px rgba(0,0,0,.7);}
+.setup-logo{font-family:'Orbitron',monospace;font-size:2.2rem;font-weight:900;color:var(--glow);letter-spacing:3px;margin-bottom:.4rem;}
+.setup-info{background:var(--card);border-radius:12px;padding:1rem;margin-bottom:1.5rem;font-size:.83rem;color:var(--muted);line-height:1.8;text-align:left;}
+.setup-info strong{color:var(--glow2);}
+.launch-btn{background:linear-gradient(135deg,#0060c0,#00a0ff);color:#fff;width:100%;padding:1rem;font-size:1rem;font-family:'Orbitron',monospace;letter-spacing:2px;border-radius:12px;cursor:pointer;border:none;transition:.3s;}
+.launch-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,160,255,.4);}
+
+.empty-msg{color:var(--muted);font-size:.83rem;text-align:center;padding:1rem;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-logo">HOST</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--muted);letter-spacing:2px;margin-bottom:1.5rem">CREATIVITY ANALYSIS</div>
+    <div class="setup-info">
+      <strong>Before you launch:</strong><br>
+      1. Share the <strong>guest.html</strong> link with all participants<br>
+      2. Ask everyone to enter their team name and wait<br>
+      3. Click <strong>Launch Quiz</strong> — all guests start instantly<br>
+      4. Use <strong>Next Question</strong> to advance each round<br><br>
+      <strong>Works over internet</strong> — guests can join from any device 🌐
+    </div>
+    <button class="launch-btn" onclick="launchQuiz()">⚡ LAUNCH QUIZ</button>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-title">🎛 HOST DASHBOARD</div>
+  <div class="topbar-right">
+    <span style="font-size:.8rem;color:var(--muted)"><span class="live-dot"></span>Live</span>
+    <span style="font-size:.8rem;color:var(--muted)" id="q-indicator">Q 0/25</span>
+    <button class="btn btn-end" onclick="endQuiz()">■ End Quiz</button>
+    <button class="btn btn-reset" onclick="resetAll()">↺ Reset</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="stats-top">
+    <div class="stat-card"><div class="n" id="s-teams">0</div><div class="l">Teams</div></div>
+    <div class="stat-card"><div class="n" id="s-answered">0</div><div class="l">Answered</div></div>
+    <div class="stat-card"><div class="n" id="s-correct">0</div><div class="l">Correct</div></div>
+    <div class="stat-card"><div class="n" id="s-q">0/25</div><div class="l">Question</div></div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">📋 CURRENT QUESTION</div>
+        <div class="q-progress" id="q-progress"></div>
+        <div class="timer-big">
+          <div class="timer-ring-big">
+            <svg width="72" height="72" viewBox="0 0 72 72">
+              <circle cx="36" cy="36" r="33"/>
+              <circle class="prog" id="timer-arc" cx="36" cy="36" r="33"/>
+            </svg>
+            <div class="timer-big-num" id="timer-num">—</div>
+          </div>
+          <div class="timer-info">
+            <div class="lbl">TIME REMAINING</div>
+            <div class="val" id="timer-status">Ready to start</div>
+          </div>
+        </div>
+        <div class="q-display" id="q-display">
+          <div style="color:var(--muted);font-size:.88rem;text-align:center;padding:.5rem">
+            Press <strong style="color:var(--glow)">Start Quiz</strong> to begin
+          </div>
+        </div>
+        <div class="controls" id="controls">
+          <button class="btn-ctrl btn-start-q" onclick="startQuiz()">▶ Start Quiz</button>
+        </div>
+      </div>
+
+      <!-- FINAL -->
+      <div class="panel" id="final-view" style="display:none;margin-top:1.2rem">
+        <div class="panel-title">🏆 FINAL RESULTS</div>
+        <div class="podium-wrap" id="podium"></div>
+        <div id="final-table" style="max-height:500px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: LEADERBOARD -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">🏆 LEADERBOARD <span class="cnt" id="lb-count">0 teams</span></div>
+        <div class="lb-list" id="leaderboard">
+          <div class="empty-msg">Waiting for teams to join…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAc8jly9WtUamtaPJpVK5MPV8poiIcQPGY",
+  authDomain:"connexion-e62a4.firebaseapp.com",
+  databaseURL:"https://connexion-e62a4-default-rtdb.firebaseio.com",
+  projectId:"connexion-e62a4"
+});
+const db = firebase.database();
+
+const QUESTIONS = [
+  {q:"The unit of capacitance is:",opts:["Henry","Farad","Weber","Coulomb"],ans:1},
+  {q:"Which instrument is used to detect very small current in a circuit?",opts:["Ammeter","Voltmeter","Galvanometer","Wattmeter"],ans:2},
+  {q:"According to Ohm's Law, what happens to current if voltage remains constant and resistance doubles?",opts:["Current doubles","Current halves","Current becomes zero","Current remains same"],ans:1},
+  {q:"The SI unit of EMF is:",opts:["Ampere","Volt","Coulomb","Watt"],ans:1},
+  {q:"The formula for energy stored in a capacitor is:",opts:["CV","½CV²","V²/C","C/V²"],ans:1},
+  {q:"A body of mass 4 kg accelerates at 3 m/s². Which expression correctly gives the force acting on the body?",opts:["F = m/a","F = m × a","F = a/m","F = m + a"],ans:1},
+  {q:"The SI unit of magnetic flux is:",opts:["Weber","Tesla","Henry","Volt"],ans:0},
+  {q:"If resistance of a conductor doubles and voltage remains constant, power will:",opts:["Double","Become half","Remain same","Become four times"],ans:1},
+  {q:"Which electrical quantity is measured in Tesla?",opts:["Magnetic field","Electric charge","Resistance","Voltage"],ans:0},
+  {q:"An object stores 20 C of charge when the potential difference across it is 4 V. Which formula should be used to determine the capacitance?",opts:["C = Q/V","C = QV","C = V/Q","C = Q + V"],ans:0},
+  {q:"If voltage across a resistor is 20 V and current is 4 A, what is the resistance?",opts:["2 Ω","5 Ω","10 Ω","80 Ω"],ans:1},
+  {q:"In a parallel circuit, the voltage across each resistor is:",opts:["Different","Same","Zero","Infinite"],ans:1},
+  {q:"The EMF of a cell is defined as:",opts:["Potential difference in resistor","Work done per unit charge","Energy per unit current","Power per unit charge"],ans:1},
+  {q:"The electric field inside a conductor in electrostatic equilibrium is:",opts:["Maximum","Minimum","Zero","Infinite"],ans:2},
+  {q:"A car travels 150 m in 10 s. Which relation is used to calculate its velocity?",opts:["V = d/t","V = d × t","V = t/d","V = d + t"],ans:0},
+  {q:"Which law states that the algebraic sum of currents at a node is zero?",opts:["Ohm's Law","Kirchhoff Voltage Law","Kirchhoff Current Law","Faraday's Law"],ans:2},
+  {q:"Which component opposes the change in current in a circuit?",opts:["Capacitor","Resistor","Inductor","Diode"],ans:2},
+  {q:"A cricket ball of mass 0.2 kg moving with velocity 15 m/s has a quantity that depends on both mass and velocity. Which expression represents this quantity?",opts:["p = m/v","p = mv","p = m + v","p = v/m"],ans:1},
+  {q:"The reciprocal of resistance is called:",opts:["Reactance","Conductance","Impedance","Admittance"],ans:1},
+  {q:"Which theorem is used to analyze circuits with multiple sources?",opts:["Superposition theorem","Ohm's Law","Maximum power theorem","Norton theorem"],ans:0},
+  {q:"A wire's resistance depends on its length, area of cross-section, and resistivity. Which formula correctly represents this relationship?",opts:["R = ρA/L","R = ρLA","R = ρL/A","R = A/ρL"],ans:2},
+  {q:"The resistance of a wire depends on:",opts:["Length","Cross-sectional area","Material","All of these"],ans:3},
+  {q:"Which law states that the sum of voltage drops in a closed loop equals the supplied EMF?",opts:["Kirchhoff Current Law","Kirchhoff Voltage Law","Ohm's Law","Lenz's Law"],ans:1},
+  {q:"If three 6 Ω resistors are connected in parallel, the equivalent resistance is:",opts:["6 Ω","3 Ω","2 Ω","18 Ω"],ans:2},
+  {q:"The relation between current, charge, and time is:",opts:["I = Q/t","I = Qt","I = Q²/t","I = t/Q"],ans:0},
+];
+
+const TIME_PER_Q=30, CIRC_BIG=2*Math.PI*33;
+let currentQ=-1, timerInterval=null, timeLeft=TIME_PER_Q;
+let _lbSnap='';
+
+// ── LAUNCH ────────────────────────────────────────────────────────────────────
+function launchQuiz(){
+  // Clear previous session and set to waiting — guests can join but quiz not started yet
+  db.ref('quiz').set({status:'waiting', currentQuestion:-1});
+  sessionStorage.setItem('host_active','true');
+  document.getElementById('setup-screen').style.display='none';
+  buildDots();
+  listenPlayers();
+  listenAnswers();
+}
+
+function buildDots(){
+  const w=document.getElementById('q-progress');w.innerHTML='';
+  QUESTIONS.forEach((_,i)=>{const d=document.createElement('div');d.className='qdot';d.id='qdot-'+i;w.appendChild(d);});
+}
+
+// ── LISTEN PLAYERS ────────────────────────────────────────────────────────────
+function listenPlayers(){
+  db.ref('quiz/players').on('value', snap=>{
+    const players=snap.val()||{};
+    const list=Object.values(players);
+    renderLeaderboard(list);
+    renderStats(list);
+  });
+}
+
+function listenAnswers(){
+  db.ref('quiz/answers').on('value', snap=>{
+    const all=snap.val()||{};
+    const qAnswers=all[currentQ]||{};
+    const players=Object.values(qAnswers);
+    document.getElementById('s-answered').textContent=players.length;
+    const correctCount=players.filter(p=>p.answer===QUESTIONS[currentQ]?.ans).length;
+    document.getElementById('s-correct').textContent=correctCount;
+  });
+}
+
+// ── QUIZ CONTROLS ─────────────────────────────────────────────────────────────
+function startQuiz(){
+  document.getElementById('controls').innerHTML=
+    '<button class="btn-ctrl btn-next-q" id="btn-next" onclick="nextQuestion()">Next Question ▶</button>'+
+    '<button class="btn-ctrl btn-skip-q" onclick="nextQuestion()">Skip</button>';
+  goToQ(0); // This sets status=active and currentQuestion=0, triggering all guests to start
+}
+
+function nextQuestion(){
+  if(currentQ>=QUESTIONS.length-1){endQuiz();return;}
+  goToQ(currentQ+1);
+}
+
+function goToQ(idx){
+  currentQ=idx;
+  clearInterval(timerInterval);
+  timeLeft=TIME_PER_Q;
+
+  document.getElementById('q-indicator').textContent='Q '+(idx+1)+'/25';
+  document.getElementById('s-q').textContent=(idx+1)+'/25';
+  updateDots(idx);
+  renderQuestion(idx);
+  arcUpdate(TIME_PER_Q);
+
+  const nb=document.getElementById('btn-next');
+  if(nb) nb.textContent=idx>=QUESTIONS.length-1?'Finish Quiz ✓':'Next Question ▶';
+
+  // Tell Firebase the new question + exact start timestamp
+  const nowTs = Date.now();
+  db.ref('quiz').update({status:'active', currentQuestion:idx, questionStartedAt:nowTs});
+  sessionStorage.setItem('host_currentQ', String(idx));
+  sessionStorage.setItem('host_qStartedAt', String(nowTs));
+
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    arcUpdate(timeLeft);
+    if(timeLeft<=0){clearInterval(timerInterval);document.getElementById('timer-status').textContent="Time's up!";}
+  },1000);
+}
+
+function renderQuestion(idx){
+  const q=QUESTIONS[idx];
+  document.getElementById('timer-status').textContent='Running…';
+  document.getElementById('q-display').innerHTML=
+    '<div class="q-meta-row"><span>Question '+(idx+1)+' of '+QUESTIONS.length+'</span></div>'+
+    '<div class="q-body">'+esc(q.q)+'</div>'+
+    '<div class="opts-preview">'+
+    q.opts.map((o,i)=>'<div class="opt-preview"><span class="opt-key">'+['A','B','C','D'][i]+'</span>'+esc(o)+'</div>').join('')+
+    '</div>';
+}
+
+function endQuiz(){
+  clearInterval(timerInterval);
+  sessionStorage.removeItem('host_active');
+  sessionStorage.removeItem('host_currentQ');
+  sessionStorage.removeItem('host_qStartedAt');
+  db.ref('quiz/status').set('ended');
+  document.getElementById('controls').innerHTML='';
+  document.getElementById('timer-status').textContent='Quiz Ended';
+  db.ref('quiz/players').once('value',snap=>{
+    showFinal(Object.values(snap.val()||{}));
+  });
+}
+
+function resetAll(){
+  if(!confirm('Reset everything?'))return;
+  clearInterval(timerInterval);
+  sessionStorage.removeItem('host_active');
+  sessionStorage.removeItem('host_currentQ');
+  sessionStorage.removeItem('host_qStartedAt');
+  db.ref('quiz').remove();
+  location.reload();
+}
+
+// ── LEADERBOARD ───────────────────────────────────────────────────────────────
+function renderLeaderboard(players){
+  const sorted=[...players].sort((a,b)=>(b.score||0)-(a.score||0));
+  const snap=sorted.map(t=>t.name+'|'+(t.score||0)+'|'+(t.correct||0)+'|'+(t.wrong||0)+'|'+(t.streak||0)).join(';');
+
+  document.getElementById('lb-count').textContent=players.length+' team'+(players.length!==1?'s':'');
+  if(snap===_lbSnap)return;
+  _lbSnap=snap;
+
+  const lb=document.getElementById('leaderboard');
+  if(sorted.length===0){lb.innerHTML='<div class="empty-msg">Waiting for teams to join…</div>';return;}
+
+  const emptyEl=lb.querySelector('.empty-msg');
+  if(emptyEl)lb.innerHTML='';
+
+  sorted.forEach((t,i)=>{
+    const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const icon=i===0?'👑':i===1?'🥈':i===2?'🥉':(i+1);
+    const rowId='lbrow-'+i;
+    let row=document.getElementById(rowId);
+    if(!row){row=document.createElement('div');row.className='lb-row';row.id=rowId;lb.appendChild(row);}
+    const html='<div class="rank-badge '+rc+'">'+icon+'</div>'+
+      '<div class="lb-name">'+esc(t.name)+'</div>'+
+      '<div class="lb-stat">'+(t.correct||0)+'✓ '+(t.wrong||0)+'✗</div>'+
+      '<div class="lb-streak">🔥'+(t.streak||0)+'</div>'+
+      '<div class="lb-score">'+(t.score||0)+'</div>';
+    if(row.innerHTML!==html)row.innerHTML=html;
+  });
+  while(lb.children.length>sorted.length)lb.removeChild(lb.lastChild);
+}
+
+function renderStats(players){
+  document.getElementById('s-teams').textContent=players.length;
+}
+
+// ── FINAL RESULTS ─────────────────────────────────────────────────────────────
+// Store player data globally for popup
+let _allPlayers = [];
+
+function showFinal(players){
+  const sorted=[...players].sort((a,b)=>(b.score||0)-(a.score||0));
+  _allPlayers = sorted;
+  const fv=document.getElementById('final-view');
+  fv.style.display='block';
+  document.getElementById('podium').innerHTML='';
+
+  const medals=['👑','🥈','🥉'];
+
+  // Header — no Time column
+  let html='<div style="display:grid;grid-template-columns:32px 1fr 80px 80px;gap:.4rem;padding:.5rem 1rem;font-size:.7rem;letter-spacing:1px;color:var(--muted);text-transform:uppercase;background:var(--border);border-radius:10px;margin-bottom:.5rem;">'
+    +'<div>#</div><div>Team <span style="font-size:.6rem;color:var(--glow)">(click name for time)</span></div><div style="text-align:center">Score</div><div style="text-align:center">Correct</div></div>';
+
+  html+=sorted.map((t,i)=>{
+    const badge=i<3?medals[i]:(i+1);
+    const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const gold=i===0?'border:1px solid var(--gold);background:rgba(255,215,0,0.05);':'';
+    return '<div class="lb-row" style="display:grid;grid-template-columns:32px 1fr 80px 80px;gap:.4rem;margin-bottom:.4rem;'+gold+'">'
+      +'<div class="rank-badge '+rc+'">'+badge+'</div>'
+      +'<div class="lb-name" onclick="showTimePopup('+i+')" style="cursor:pointer;color:var(--glow);text-decoration:underline dotted;">'+esc(t.name)+'</div>'
+      +'<div class="lb-score" style="text-align:center">'+(t.score||0)+'</div>'
+      +'<div style="font-size:.78rem;color:var(--muted);text-align:center;align-self:center">'+(t.correct||0)+'✓ '+(t.wrong||0)+'✗</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('final-table').innerHTML=html;
+}
+
+function showTimePopup(playerIdx){
+  const t = _allPlayers[playerIdx];
+  if(!t) return;
+
+  const totalSec = t.totalTime || 0;
+  const mins = Math.floor(totalSec/60);
+  const secs = totalSec % 60;
+  const timeStr = mins>0 ? mins+'m '+String(secs).padStart(2,'0')+'s' : secs+' seconds';
+
+  // Find this player's ID by matching name in Firebase answers
+  // Build popup first with total time, then load per-Q breakdown
+  const existing = document.getElementById('time-popup');
+  if(existing) existing.remove();
+
+  const popup = document.createElement('div');
+  popup.id = 'time-popup';
+  popup.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);';
+  popup.innerHTML =
+    '<div style="background:var(--surface);border:1px solid var(--glow);border-radius:18px;padding:1.8rem;max-width:360px;width:90%;position:relative;max-height:82vh;overflow-y:auto;" id="popup-inner">'
+    +'<button onclick="document.getElementById(\'time-popup\').remove()" style="position:absolute;top:.8rem;right:.8rem;background:transparent;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;">✕</button>'
+    +'<div style="font-family:Orbitron,monospace;font-size:.75rem;color:var(--glow);letter-spacing:2px;margin-bottom:.4rem">⏱ TIME BREAKDOWN</div>'
+    +'<div style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:.3rem">'+esc(t.name)+'</div>'
+    +'<div style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Total time: <strong style="color:var(--glow2)">'+timeStr+'</strong></div>'
+    +'<div id="per-q-breakdown"><div style="color:var(--muted);font-size:.8rem;text-align:center">Loading per-question times…</div></div>'
+    +'</div>';
+
+  popup.addEventListener('click', e => { if(e.target===popup) popup.remove(); });
+  document.body.appendChild(popup);
+
+  // Load per-question times from Firebase answers
+  db.ref('quiz/answers').once('value', snap => {
+    const allAnswers = snap.val() || {};
+    const rows = [];
+
+    // Go through each question's answers and find this player's entry
+    Object.keys(allAnswers).forEach(qIdx => {
+      const qAnswers = allAnswers[qIdx];
+      const playerEntry = Object.values(qAnswers).find(a => a.name === t.name);
+      if(playerEntry){
+        rows[parseInt(qIdx)] = playerEntry.timeUsed || 0;
+      }
+    });
+
+    const breakdownEl = document.getElementById('per-q-breakdown');
+    if(!breakdownEl) return;
+
+    if(rows.length === 0){
+      breakdownEl.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center">No per-question data available</div>';
+      return;
+    }
+
+    let html = '<div style="font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:.5rem;text-transform:uppercase">Per Question (seconds)</div>';
+    for(let i=0;i<QUESTIONS.length;i++){
+      const sec = rows[i] !== undefined ? rows[i] : '—';
+      const color = sec==='—'?'var(--danger)':sec<=10?'var(--success)':sec<=20?'var(--gold)':'var(--glow2)';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:.82rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
+        +'<span style="color:var(--muted)">Question '+(i+1)+'</span>'
+        +'<span style="color:'+color+';font-family:Orbitron,monospace;font-size:.85rem">'+sec+(sec!=='—'?'s':'')+'</span>'
+        +'</div>';
+    }
+    breakdownEl.innerHTML = html;
+  });
+}
+
+// ── AUTO-RESTORE ON REFRESH ──────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const hostActive = sessionStorage.getItem('host_active');
+  if(!hostActive) return; // Not an active session, show setup screen normally
+
+  // Host was active — restore dashboard without showing setup screen
+  document.getElementById('setup-screen').style.display='none';
+  buildDots();
+  listenPlayers();
+  listenAnswers();
+
+  // Read current quiz state from Firebase
+  db.ref('quiz').once('value', snap => {
+    const data = snap.val();
+    if(!data){ sessionStorage.removeItem('host_active'); location.reload(); return; }
+
+    const status = data.status;
+    const qIdx = data.currentQuestion;
+    const qStartedAt = data.questionStartedAt || Date.now();
+
+    if(status === 'ended'){
+      document.getElementById('controls').innerHTML='';
+      document.getElementById('timer-status').textContent='Quiz Ended';
+      db.ref('quiz/players').once('value', s => showFinal(Object.values(s.val()||{})));
+      return;
+    }
+
+    if(status === 'active' && qIdx >= 0){
+      currentQ = qIdx;
+      document.getElementById('q-indicator').textContent='Q '+(qIdx+1)+'/25';
+      document.getElementById('s-q').textContent=(qIdx+1)+'/25';
+      updateDots(qIdx);
+      renderQuestion(qIdx);
+
+      // Show Next/Skip controls
+      document.getElementById('controls').innerHTML=
+        '<button class="btn-ctrl btn-next-q" id="btn-next" onclick="nextQuestion()">'
+        +(qIdx>=QUESTIONS.length-1?'Finish Quiz ✓':'Next Question ▶')+'</button>'
+        +'<button class="btn-ctrl btn-skip-q" onclick="nextQuestion()">Skip</button>';
+
+      // Sync timer from server timestamp
+      const elapsed = Math.floor((Date.now() - qStartedAt) / 1000);
+      timeLeft = Math.max(0, TIME_PER_Q - elapsed);
+      arcUpdate(timeLeft);
+
+      if(timeLeft <= 0){
+        document.getElementById('timer-status').textContent="Time's up!";
+      } else {
+        document.getElementById('timer-status').textContent='Running…';
+        clearInterval(timerInterval);
+        timerInterval = setInterval(()=>{
+          timeLeft--;
+          arcUpdate(timeLeft);
+          if(timeLeft<=0){ clearInterval(timerInterval); document.getElementById('timer-status').textContent="Time's up!"; }
+        }, 1000);
+      }
+    }
+
+    if(status === 'waiting'){
+      // Quiz launched but not started yet — show Start Quiz button
+      document.getElementById('controls').innerHTML=
+        '<button class="btn-ctrl btn-start-q" onclick="startQuiz()">▶ Start Quiz</button>';
+      document.getElementById('timer-status').textContent='Ready to start';
+    }
+  });
+});
+
+// ── UI HELPERS ────────────────────────────────────────────────────────────────
+function arcUpdate(t){
+  const arc=document.getElementById('timer-arc'),num=document.getElementById('timer-num');
+  arc.style.strokeDashoffset=CIRC_BIG*(1-t/TIME_PER_Q);
+  num.textContent=t;
+  if(t<=5){arc.style.stroke='#ff3355';num.style.color='#ff3355';}
+  else if(t<=10){arc.style.stroke='#ff6b00';num.style.color='#ff6b00';}
+  else{arc.style.stroke='#00d4ff';num.style.color='#00d4ff';}
+}
+function updateDots(idx){
+  QUESTIONS.forEach((_,i)=>{const d=document.getElementById('qdot-'+i);if(d)d.className='qdot'+(i<idx?' done':i===idx?' current':'');});
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
